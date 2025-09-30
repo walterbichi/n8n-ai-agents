@@ -1,0 +1,290 @@
+{
+  "name": "Financial Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "allowFileUploads": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [-160, 32],
+      "id": "57515d3d-ea4c-4e43-970e-dcc5403544ae",
+      "name": "When chat message received",
+      "webhookId": "04cec474-46d6-42e9-bcb1-bd3a1b2e4d37"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=#Role\nYou are an assistant capable of answering frequently asked questions about personal finances.\n\n##Tasks\n- Your main function is to respond to this message: {{ $json.chatInput }}\n- Use information from the budget tool when required. The budget for each category is the money available to spend that month.\n- Use information from the expenses tool when required. Expense dates are in DD/MM/YYYY format.\n- When the user attaches a receipt or invoice, extract: expense_name, total, date, expense_category. Then insert them into the expenses table using the InsertExpenses tool. The expense_category can only be Health, Restaurants, Transportation, Food, or Sports.\n\n##Notes\n- Keep responses clear and concise; do not exceed 200 characters.\n- You can make calculations to obtain total results of income and expenses.\n- Always refer to money as dollars.\n- The budget for each category is the money available to spend that month. The difference between budgeted and monthly expenses is the money still available in that category.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [64, 32],
+      "id": "fd7fe156-6db7-4563-8c70-4c002184da40",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.1,
+      "position": [-176, 256],
+      "id": "44b3baf3-ef70-4be8-ae71-028f79dc1698",
+      "name": "OpenAI Chat Model",
+      "credentials": {}
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [-16, 256],
+      "id": "f0a6cb33-8165-47eb-8ebb-0b6ad1df5371",
+      "name": "Postgres Chat Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Call this module to view current expenses. To filter by months of the year use the Date column in DD/MM/YYYY format",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appxFopDOz2xQu6II",
+          "mode": "list",
+          "cachedResultName": "FinancialAssistant",
+          "cachedResultUrl": "https://airtable.com/appxFopDOz2xQu6II"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblWziKrJmNHIg58n",
+          "mode": "list",
+          "cachedResultName": "AccountingList",
+          "cachedResultUrl": "https://airtable.com/appxFopDOz2xQu6II/tblWziKrJmNHIg58n"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [608, 192],
+      "id": "ab008711-e442-4d39-aa0d-eaddcef8ba37",
+      "name": "ViewExpenses"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Call this module to find information about the budget for each category",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appxFopDOz2xQu6II",
+          "mode": "list",
+          "cachedResultName": "FinancialAssistant",
+          "cachedResultUrl": "https://airtable.com/appxFopDOz2xQu6II"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl6zwtHxXdJgJm5A",
+          "mode": "list",
+          "cachedResultName": "Budget",
+          "cachedResultUrl": "https://airtable.com/appxFopDOz2xQu6II/tbl6zwtHxXdJgJm5A"
+        },
+        "filterByFormula": "={Month} = \"{{ $fromAI(\"date\", \"month of the year in English with first letter capitalized\") }}\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [464, 240],
+      "id": "338b5977-6307-4994-9522-024eed554849",
+      "name": "ViewBudget"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Call this module to insert new expense data",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appxFopDOz2xQu6II",
+          "mode": "list",
+          "cachedResultName": "FinancialAssistant",
+          "cachedResultUrl": "https://airtable.com/appxFopDOz2xQu6II"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblWziKrJmNHIg58n",
+          "mode": "list",
+          "cachedResultName": "AccountingList",
+          "cachedResultUrl": "https://airtable.com/appxFopDOz2xQu6II/tblWziKrJmNHIg58n"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Amount": "={{ $fromAI('total', \"the total must be in dollars\", \"number\") }}",
+            "Name": "={{ $fromAI('expense_name') }}",
+            "Date": "={{ $fromAI('date', \"Date in DD/MM/YYYY format\", \"string\", \"22/02/2025\") }}",
+            "Category": "={{ $fromAI('expense_category') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Restaurants",
+                  "value": "Restaurants"
+                },
+                {
+                  "name": "Health",
+                  "value": "Health"
+                },
+                {
+                  "name": "Sports",
+                  "value": "Sports"
+                },
+                {
+                  "name": "Transportation",
+                  "value": "Transportation"
+                },
+                {
+                  "name": "Food",
+                  "value": "Food"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [304, 240],
+      "id": "69d73264-4cff-4f3e-b74a-7d2c0d5b9492",
+      "name": "InsertExpenses"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ViewExpenses": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ViewBudget": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "InsertExpenses": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8aac18d1-4d01-4115-a200-ea7ded0d6917",
+  "meta": {
+    "instanceId": "d7abe58770666f096492ee7bcf596997304d49d748202388b6e4d2f59b0d3a1a"
+  },
+  "id": "m4hqIhXNBxnjQUBa",
+  "tags": []
+}
