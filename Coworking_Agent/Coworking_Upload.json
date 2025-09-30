@@ -1,0 +1,176 @@
+{
+  "name": "Coworking Upload",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "{{GOOGLE_DRIVE_FOLDER_ID}}",
+          "mode": "list",
+          "cachedResultName": "Coworking",
+          "cachedResultUrl": "{{GOOGLE_DRIVE_FOLDER_URL}}"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [-768, 0],
+      "id": "69fcc4c7-8327-48e1-a471-263dc4174b90",
+      "name": "File Upload Detector"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.webViewLink }}",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [-544, 0],
+      "id": "a87c519a-957e-4ac1-940e-bc131d16fed7",
+      "name": "Download File Content"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "coworking",
+          "mode": "list",
+          "cachedResultName": "coworking"
+        },
+        "options": {
+          "pineconeNamespace": "coworking_namespace"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1,
+      "position": [-304, 0],
+      "id": "639b9b0b-ff9d-4095-a84b-f8fa353c3a79",
+      "name": "Store Document Vectors"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [-416, 192],
+      "id": "ab8b749d-b674-46ec-88a2-a85e9872f441",
+      "name": "Generate Text Embeddings"
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "data",
+                "value": "={{ $json.name }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [-160, 208],
+      "id": "6b2adf15-9b94-4462-b8cc-e654afd71b8e",
+      "name": "Extract Document Text"
+    },
+    {
+      "parameters": {
+        "chunkSize": 200,
+        "chunkOverlap": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [-160, 368],
+      "id": "8bc9f208-b2bf-4876-bb4e-685e65eee871",
+      "name": "Split Text into Chunks"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "File Upload Detector": {
+      "main": [
+        [
+          {
+            "node": "Download File Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File Content": {
+      "main": [
+        [
+          {
+            "node": "Store Document Vectors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Text Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Store Document Vectors",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Document Text": {
+      "ai_document": [
+        [
+          {
+            "node": "Store Document Vectors",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Text into Chunks": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Extract Document Text",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "43e99d63-d676-43f1-9a28-accae289b0ee",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d7abe58770666f096492ee7bcf596997304d49d748202388b6e4d2f59b0d3a1a"
+  },
+  "id": "qw7EWe9geTzax4We",
+  "tags": []
+}
