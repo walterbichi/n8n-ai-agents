@@ -1,0 +1,214 @@
+{
+  "name": "Assistant Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [-220, -80],
+      "id": "5c352ee1-79c5-4b74-9749-333f725f80a4",
+      "name": "When chat message received",
+      "webhookId": "5316f312-2cb8-48a4-a3b4-a43639a6f1eb"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=#Role\nYou are a personal assistant that helps the user manage their clients.\n\n##Tasks\n- Your main function is to respond to this message: {{ $json.chatInput }}\n\n- Use information from the Clients tool to retrieve data about customers.\n\n- Use the ScheduleMeetings tool to schedule events and meetings using the current time: {{ $now }}.\n\n- Use the SendEmail tool to send emails to customers.\n\n##Notes\n- Keep responses clear and concise; do not exceed 200 characters.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [0, -80],
+      "id": "918c7f4f-9ec3-4898-9e73-d7991f356e0c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.1,
+      "position": [-220, 120],
+      "id": "f754c075-b480-4618-993f-0dfb3b03beca",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "{{PERSONAL_ASSISTANT_OPENAI_CREDENTIAL_ID}}",
+          "name": "{{PERSONAL_ASSISTANT_OPENAI_CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [-60, 120],
+      "id": "a7a16dfb-a969-4872-adec-06bfa563248b",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "18T6WjEfJZWKpqR0Lcg_ZCnKZ7M1_qePaL9-e8W5FreU",
+          "mode": "list",
+          "cachedResultName": "Clients",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18T6WjEfJZWKpqR0Lcg_ZCnKZ7M1_qePaL9-e8W5FreU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18T6WjEfJZWKpqR0Lcg_ZCnKZ7M1_qePaL9-e8W5FreU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.5,
+      "position": [600, 20],
+      "id": "41c19eb6-8d5a-4401-a4ee-211167676eb9",
+      "name": "Clients",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "{{PERSONAL_ASSISTANT_SHEETS_CREDENTIAL_ID}}",
+          "name": "{{PERSONAL_ASSISTANT_SHEETS_CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $fromAI(\"emailAddress\",\"customer email\") }}",
+        "subject": "={{ $fromAI(\"subject\",\"email subject\") }}",
+        "message": "={{ $fromAI(\"message\",\"message content\") }}",
+        "options": {
+          "senderName": "{{PERSONAL_ASSISTANT_SENDER_NAME}}"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [440, 120],
+      "id": "47de435e-8708-4c96-bdec-4c754251ce9a",
+      "name": "SendEmail",
+      "webhookId": "1039ffeb-0f85-42e8-a20a-c96f829a63d6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "{{PERSONAL_ASSISTANT_GMAIL_CREDENTIAL_ID}}",
+          "name": "{{PERSONAL_ASSISTANT_GMAIL_CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "{{PERSONAL_ASSISTANT_CALENDAR_EMAIL}}",
+          "mode": "list",
+          "cachedResultName": "{{PERSONAL_ASSISTANT_CALENDAR_EMAIL}}"
+        },
+        "start": "={{ $fromAI(\"startTime\") }}",
+        "end": "={{ $fromAI(\"endTime\") }}",
+        "additionalFields": {
+          "description": "={{$fromAI(\"subject\")}}",
+          "summary": "={{$fromAI(\"title\", \"meeting name\")}}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.2,
+      "position": [280, 160],
+      "id": "d4403e58-9acc-44ef-b1dc-4620b8df1320",
+      "name": "ScheduleMeetings",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "{{PERSONAL_ASSISTANT_CALENDAR_CREDENTIAL_ID}}",
+          "name": "{{PERSONAL_ASSISTANT_CALENDAR_CREDENTIAL_NAME}}"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clients": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SendEmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ScheduleMeetings": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Argentina/Buenos_Aires",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1
+  },
+  "versionId": "3e2a0353-765a-4d52-95ff-0d782160c6c7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e4fdb4e0168a7f4d35dba69787a6a0f975f7036521581508c5244ad600860eff"
+  },
+  "id": "mUdlJqBWJDnCZNwZ",
+  "tags": []
+}
