@@ -1,0 +1,218 @@
+{
+  "name": "LinkedIn Agent Extract",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [-240, -80],
+      "id": "852e68cc-a6ba-4b10-bd5d-5c8c070586fe",
+      "name": "Workflow Input Trigger"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.query }}"
+            },
+            {
+              "content": "Parse the JSON content from 'query' and generate the following parameters separately:\nposition\nsector\nlocation",
+              "role": "system"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [-60, -80],
+      "id": "f141fbe0-b514-47dc-808d-f08a6debfab0",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "{{LINKEDIN_OPENAI_CREDENTIAL_ID}}",
+          "name": "{{LINKEDIN_OPENAI_CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=site:linkedin.com/in/ {{ $json.message.content.position }} {{ $json.message.content.sector }} {{ $json.message.content.location }}"
+            },
+            {
+              "name": "api_key",
+              "value": "{{SERPAPI_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [280, -80],
+      "id": "0dd6d717-8131-4545-abf3-1b0a07072115",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();  // Get all input data\n\n// Extract LinkedIn profiles\nconst extractLinkedInProfiles = (items) => {\n    if (!Array.isArray(items) || items.length === 0) {\n        console.log(\"The provided JSON is not valid or is empty.\");\n        return [];\n    }\n    \n    const data = items[0].json; // Access data from first element\n    const results = data.organic_results || [];\n    \n    return results.map(profile => ({\n        name: profile.title,\n        url: profile.link\n    }));\n};\n\n// Get the results\nconst linkedInProfiles = extractLinkedInProfiles(items);\n\n// Return results for n8n\nreturn linkedInProfiles;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, -80],
+      "id": "b3135a00-8df6-410b-8743-f5836e799ac2",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appxjLFvd0FlL7l9t",
+          "mode": "list",
+          "cachedResultName": "LinkedinData",
+          "cachedResultUrl": "https://airtable.com/appxjLFvd0FlL7l9t"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblKhoaUDPoOudLfv",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appxjLFvd0FlL7l9t/tblKhoaUDPoOudLfv"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.name }}",
+            "URL": "={{ $json.url }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [760, -80],
+      "id": "7c0544a3-419b-4cca-b55b-e68204828dd8",
+      "name": "Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "Hnet53Zu2K2CwleQ",
+          "name": "Linkedin"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Workflow Input Trigger": [
+      {
+        "json": {
+          "query": "position=&sector=&location=&"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Workflow Input Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable": {
+      "main": [[]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Argentina/Buenos_Aires"
+  },
+  "versionId": "ef3e64f8-4a9e-4583-b3e4-223c819526e0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e4fdb4e0168a7f4d35dba69787a6a0f975f7036521581508c5244ad600860eff"
+  },
+  "id": "agTHdnNIxHEmqlrK",
+  "tags": []
+}

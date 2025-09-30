@@ -1,0 +1,134 @@
+{
+  "name": "LinkedIn Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "id": "e6201bbb-4836-439f-a0d6-77927278ecc5",
+      "name": "When chat message received",
+      "webhookId": "ae9029e1-a0dd-4a8b-9148-5d3fb5e38740"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [220, 0],
+      "id": "b835a277-1578-495c-b667-01077d8e7cd0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.1,
+      "position": [40, 200],
+      "id": "6e3c344e-a372-4dcd-a7e6-31cd6e882d29",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "{{LINKEDIN_OPENAI_CREDENTIAL_ID}}",
+          "name": "{{LINKEDIN_OPENAI_CREDENTIAL_NAME}}"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [200, 200],
+      "id": "dd884d9a-1407-4079-85cc-ada0436f8b0b",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "name": "GetLinkedInProfiles",
+        "description": "Call this tool to retrieve LinkedIn profile data",
+        "workflowId": {
+          "__rl": true,
+          "value": "agTHdnNIxHEmqlrK",
+          "mode": "list",
+          "cachedResultName": "LinkedIn_Agent_Extract"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [580, 160],
+      "id": "69013564-4f3a-4bb3-b340-c1e87962e501",
+      "name": "GetLinkedInProfiles"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetLinkedInProfiles": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Argentina/Buenos_Aires"
+  },
+  "versionId": "06d159bd-b90d-48b2-b4b5-8025c7d79ec4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e4fdb4e0168a7f4d35dba69787a6a0f975f7036521581508c5244ad600860eff"
+  },
+  "id": "gWo7H7poBsALK1HC",
+  "tags": []
+}
