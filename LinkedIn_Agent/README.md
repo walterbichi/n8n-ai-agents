@@ -1,7 +1,7 @@
 # LinkedIn Agent
 
-![LinkedIn Agent Extract Cover](./images/linkedin-agent-extract.png)
-![LinkedIn Agent Main Cover](./images/linkedin-agent.png)
+![LinkedIn Agent Extract Cover](./images/linkedIn-agent-extract.png)
+![LinkedIn Agent Main Cover](./images/linkedIn-agent.png)
 
 ## Overview
 

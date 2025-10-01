@@ -1,7 +1,5 @@
 # Modular AI Agents with n8n & LangChain
 
-![Project Cover](certificate.jpg)
-
 ## Overview
 
 This repository is a showcase of modular AI agents built with n8n, LangChain, and vector databases (Pinecone). Developed as part of a practical course, it demonstrates how non-technical users can create, automate, and deploy advanced AI workflows without writing code.
@@ -83,4 +81,8 @@ By completing this project, you will:
 
 ---
 
-For questions, support, or feedback, refer to the course documentation or open an issue in this repository.
+## Certificate
+
+- **Verify on Udemy:** https://www.udemy.com/certificate/UC-66b38af6-b31e-4087-a05b-e7cdef05407d/
+
+![Project Cover](certificate.jpg)
